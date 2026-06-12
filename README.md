@@ -1,4 +1,4 @@
-# 3-CNF Solver
+# 3-CNF Model Counter
 
 ## Structure
 
@@ -52,7 +52,32 @@ solution
 
 ## Useful
 
-### Stop VsCode from bitching because of folder structure
+### Benchmarking
+
+**NOTE:** Unless you have OpenMP locally installed there is no point in finicking around with the files. Upload the contents of `src/benchmark` as described and test on the OMICS Cluster.
+
+1. For ease of use create a new folder in the OMICS Cluster
+2. Upload `Makefile`, `benchmarker.c`, `sequential.c`, `sequential.h`, `parallel.c`, `parallel.h`, `parser_temur.c` and `parser_temur.h` 
+3. Inside the folder create a `data` folder and upload all instances
+4. run `make bench_cnf`
+5. run `./bench_cnf data`
+
+#### Recommended structure
+```
+home/<name>/project
+├─ data/
+│  ├─ uf20-01.cnf
+│  ├─ ...
+│  └─ uf20-020.cnf
+├─ Makefile
+├─ sequential.c
+├─ sequential.h
+├─ parallel.c
+├─ parallel.h
+└─ benchmarker.c
+```
+
+### Stop Visual Studio Code from bitching because of folder structure
 
 1. Deactivate clangd in workspace
 2. Create `.vscode` in root
