@@ -1,1 +1,3 @@
 test_instance_generator/.python-version
+.vscode
+src/seq_bruteforce

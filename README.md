@@ -49,3 +49,29 @@ solution
 * The python library is a wrapper around a reliable solver (Glucose3), so just trust me bro.
 * The point of the generator is validation, because I really don't know how they expect us to build a Model Counter without test data.
 * Regularely generating test cases can be useful, for now I will keep the generated ones in the repository.
+
+## Useful
+
+### Stop VsCode from bitching because of folder structure
+
+1. Deactivate clangd in workspace
+2. Create `.vscode` in root
+3. Create `c_cpp_properties.json`
+4. Copy following:
+```
+{
+    "configurations": [
+        {
+            "name": "Linux/Mac",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "${workspaceFolder}/src"
+            ],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "c11",
+            "intelliSenseMode": "linux-gcc-x64"
+        }
+    ],
+    "version": 4
+}
+```
