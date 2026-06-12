@@ -9,8 +9,8 @@
         -Formula* f:        Formula struct which defines the logic formula
         -int* assigment:    Array of assignments for the atoms, to avoid off-by-one assingment[0] is a placeholder
     returns:
-        - 1: true => the assignment fullfills the Formula
-        - 0: false => the assignment does not fullfill the Formula
+        - 1:                the assignment fullfills the Formula
+        - 0:                the assignment does not fullfill the Formula
 */
 int check_formula(Formula* f, int* assignment) {
     
@@ -70,7 +70,7 @@ int generate_assignments(Formula* f, int* assignments, int current_var) {
     params:
         -Formula* f:        Formula struct which defines the logic formula
     returns:
-        - int: amount of found Models
+        - int:              amount of found Models
 */
 int run_sequential_counting(Formula* f) {
     int* assignments = (int*) malloc((f->num_vars + 1) * sizeof(int));
