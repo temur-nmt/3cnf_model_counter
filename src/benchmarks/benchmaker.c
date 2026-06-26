@@ -5,7 +5,7 @@
 #include <unistd.h>
 
 #include "sequential.h"
-// #include "parallel.h"
+#include "parallel.h"
 
 int main(int argc, char *argv[]) {
 
@@ -65,9 +65,9 @@ int main(int argc, char *argv[]) {
 
         // --- B. PARALLEL TEST ---
         gettimeofday(&startTime, NULL);
-        // int par_models = run_parallel_counting(&formulae[i], procs); 
-        int par_models = seq_models; // DUMMY
-        usleep(10000); // DUMMY-TIME
+        int par_models = run_parallel_counting(&formulae[i], procs); 
+        // int par_models = seq_models; // DUMMY
+        // usleep(10000); // DUMMY-TIME
         gettimeofday(&endTime, NULL);
         
         long par_time = endTime.tv_usec - startTime.tv_usec + (endTime.tv_sec - startTime.tv_sec) * 1000000;

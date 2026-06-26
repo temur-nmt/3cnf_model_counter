@@ -1,7 +1,10 @@
 CC = gcc
 CFLAGS = -fopenmp -lm
 
-SRCS = benchmaker.c parser_temur.c sequential.c
+SRCS = parser_temur.c sequential.c parallel.c
 
-bench_cnf: $(SRCS)
-	$(CC) $(CFLAGS) -o bench_cnf $(SRCS)
+bench_cnf: benchmaker.c $(SRCS)
+	$(CC) $(CFLAGS) -o bench_cnf benchmaker.c $(SRCS)
+
+bench_par: parallel_bench.c $(SRCS)
+	$(CC) $(CFLAGS) -o parallel_bench.c benchmaker.c $(SRCS)
