@@ -1,3 +1,5 @@
 test_instance_generator/.python-version
 .vscode
 src/seq_bruteforce
+src/par_temur
+src/par_felix
