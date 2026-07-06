@@ -3,7 +3,8 @@
 #include <sys/time.h>
 #include <omp.h>
 #include "parallel.h"
-#include "parser_temur.h"
+#include "parser.h"
+#include <stdint.h>
 
 
 /*
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
         Formula f = parse_dimacs(file_path);
 
         gettimeofday(&startTime, NULL);
-        int models = solve_grouped_formula(&f, procs);
+        uint64_t models = run_parallel_counting(&f, procs);
         gettimeofday(&endTime, NULL);
         
         long long par_time = endTime.tv_usec - startTime.tv_usec + (endTime.tv_sec - startTime.tv_sec) * 1000000;

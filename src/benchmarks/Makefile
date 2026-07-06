@@ -7,4 +7,4 @@ bench_cnf: benchmaker.c $(SRCS)
 	$(CC) $(CFLAGS) -o bench_cnf benchmaker.c $(SRCS) -lm
 
 bench_par: parallel_bench.c $(SRCS)
-	$(CC) $(CFLAGS) -o parallel_bench.c benchmaker.c $(SRCS) -lm
+	$(CC) $(CFLAGS) -o bench_par parallel_bench.c $(SRCS) -lm
