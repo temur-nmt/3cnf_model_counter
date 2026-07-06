@@ -31,6 +31,15 @@
 #define LOG_DEBUG(fmt, ...) \
   do { if (DEBUG > 1) fprintf(stderr, "DEBUG: " fmt "\n", ##__VA_ARGS__); } while (0)
 
+/* Parallelization option:
+ * - PARALLEL_THREADS == 0 : auto (use omp_get_max_threads())
+ * - PARALLEL_THREADS == 1 : effectively sequential (no parallel worker spawning)
+ * - PARALLEL_THREADS  > 1 : use this fixed number of threads for parallel counters
+ */
+#ifndef PARALLEL_THREADS
+#define PARALLEL_THREADS 0
+#endif
+
 /* Project options */
 #define INPUT_DIR "test_instances"
 #define PATH_MAX_LEN 128
@@ -77,8 +86,7 @@ void free_formula(Formula *f);
 /* Utilities */
 int formula_num_vars(const Formula *f);
 
-/* Model counting interfaces. Implementations exist in bruteforce.c and
- * dpll.c (stub). */
+/* Model counting interfaces. Implementations exist in bruteforce.c and dpll.c */
 int check_formula(Formula *f, int *assignment);
 int generate_assignments(Formula *f, int *assignments, int current_var);
 unsigned long long run_sequential_counting(Formula *f);
@@ -86,5 +94,13 @@ unsigned long long run_parallel_counting(Formula *f, int procs);
 
 /* DPLL-based counter (future work) */
 int run_dpll_counting(Formula *f, int procs);
+/* Hybrid counting: decompose into components and count each component.
+ * Uses brute force for small components (<=16 vars) and DPLL for larger ones.
+ */
+unsigned long long count_formula(Formula *f);
+
+/* Helpers exposed for component extraction and counting */
+unsigned long long bruteforce_count_component(const Formula *comp);
+unsigned long long dpll_count_component(Formula *comp);
 
 #endif // HEADER_H

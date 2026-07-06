@@ -49,16 +49,38 @@ int main() {
       free(assignment);
     }
 
-    double t0 = omp_get_wtime();
-    unsigned long long seq_count = run_sequential_counting(&f);
-    double t1 = omp_get_wtime();
-    printf("%s: sequential count = %llu (time %0.6f s)\n", q.items[i], seq_count, t1 - t0);
+    int nvars = formula_num_vars(&f);
+    printf("%s: formula has %zu clauses and %d variables\n", q.items[i], f.count, nvars);
 
-    int procs = omp_get_max_threads();
-    double tp0 = omp_get_wtime();
-    unsigned long long par_count = run_parallel_counting(&f, procs);
-    double tp1 = omp_get_wtime();
-    printf("%s: parallel count = %llu with %d threads (time %0.6f s)\n", q.items[i], par_count, procs, tp1 - tp0);
+    if (nvars <= 16) {
+      double t0 = omp_get_wtime();
+      unsigned long long seq_count = run_sequential_counting(&f);
+      double t1 = omp_get_wtime();
+      printf("%s: sequential count = %llu (time %0.6f s)\n", q.items[i], seq_count, t1 - t0);
+
+      /* Implementation block: determine thread count from header option.
+       * PARALLEL_THREADS == 0  -> auto (use omp_get_max_threads())
+       * PARALLEL_THREADS == 1  -> sequential (1 thread)
+       * PARALLEL_THREADS  > 1  -> use specified number of threads
+       */
+      int procs;
+    #if PARALLEL_THREADS == 0
+      procs = omp_get_max_threads();
+    #elif PARALLEL_THREADS == 1
+      procs = 1;
+    #else
+      procs = PARALLEL_THREADS;
+    #endif
+      double tp0 = omp_get_wtime();
+      unsigned long long par_count = run_parallel_counting(&f, procs);
+      double tp1 = omp_get_wtime();
+      printf("%s: parallel count = %llu with %d threads (time %0.6f s)\n", q.items[i], par_count, procs, tp1 - tp0);
+    } else {
+      double th0 = omp_get_wtime();
+      unsigned long long hybrid_count = count_formula(&f);
+      double th1 = omp_get_wtime();
+      printf("%s: hybrid count = %llu (time %0.6f s)\n", q.items[i], hybrid_count, th1 - th0);
+    }
 
     free_formula(&f);
   }

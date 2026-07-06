@@ -107,3 +107,23 @@ Possible next steps:
  - `DEBUG` is disabled by default in `header.h`; enable it for more verbose logging.
 - `INPUT_DIR` is currently fixed to `test_instances`; consider making it configurable.
 - The current parser is robust to leading comments and ignores `%` clauses termination.
+
+## DPLL & Hybrid counting plan
+
+Planned approach to support larger CNFs and scale beyond single-word bitmask limits:
+
+- Component decomposition: find variable-connected components (union-find or BFS). The model count of the full formula is the product of component counts.
+- Cutoff: if a component has <= 16 variables, enumerate it with the fast brute-force (`bruteforce.c`). 16 variables => 2^16 = 65k assignments.
+- DPLL for larger components: implement a recursive DPLL-style counter with:
+	- unit propagation and pure-literal elimination,
+	- simple branching heuristic (e.g. highest-occurrence variable),
+	- component detection during search to multiply independent subcounts,
+	- optional caching of simplified-subformula -> count to avoid repeated work.
+- Parallelism: run independent components in parallel first. Inside DPLL, use OpenMP tasks for branching at shallow depths (limit tasking depth to avoid overhead).
+
+This hybrid strategy allows continuing to use the fast 64-bit brute-force where it is best, and fall back to DPLL+cache for larger, structured components.
+
+Next implementation steps:
+
+- implement union-find component extraction and the hybrid `count_formula` runner,
+- implement a minimal DPLL with unit propagation and caching, then optimize (watch lists, better heuristics) as needed.
