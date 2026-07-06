@@ -1,10 +1,21 @@
+/*
+ * parser.c
+ *
+ * Lightweight DIMACS CNF parser and simple directory enumerator used by the
+ * driver. The parser tolerates leading comment lines (starting with 'c') and
+ * requires a header line of the form: `p cnf <num-vars> <num-clauses>`.
+ */
+
 #include "header.h"
 
+/* List non-hidden files in `path`. Returns a FileQueue with allocated
+ * `items`. Caller must free `items` when done. On error an empty queue is
+ * returned and an error is printed to stderr. */
 FileQueue list_dir(const char *path) {
   FileQueue q = {0};
   DIR *dir = opendir(path);
   if (!dir) {
-    fprintf(stderr, "failed to open directory %s\n", path);
+    LOG_ERROR("failed to open directory %s", path);
     return q;
   }
 
@@ -20,7 +31,7 @@ FileQueue list_dir(const char *path) {
 
       Filename *new_items = realloc(q.items, new_cap * sizeof(Filename));
       if (!new_items) {
-        fprintf(stderr, "Error: Allocation of new items failed\n");
+        LOG_ERROR("allocation of file queue items failed");
         break;
       }
 
@@ -30,29 +41,30 @@ FileQueue list_dir(const char *path) {
 
     // build full path
     char full[PATH_MAX_LEN];
-    snprintf(full, PATH_MAX_LEN, "%s/%s", path, ent->d_name);
+    int needed = snprintf(full, PATH_MAX_LEN, "%s/%s", path, ent->d_name);
+    if (needed < 0 || needed >= PATH_MAX_LEN) {
+      LOG_ERROR("path too long: %s/%s", path, ent->d_name);
+      continue;
+    }
     full[PATH_MAX_LEN - 1] = '\0';
     strncpy(q.items[q.count], full, PATH_MAX_LEN);
     q.items[q.count][PATH_MAX_LEN - 1] = '\0';
-    if (DEBUG)
-      printf("%s/%s\n", path, ent->d_name);
+    LOG_INFO("%s/%s", path, ent->d_name);
 
     q.count++;
   }
-  if (DEBUG)
-    printf("listed files successfully.\n");
+  LOG_INFO("listed files successfully.");
   closedir(dir);
   return q;
 }
 
 Formula parse_dimacs(const char *filename) {
   Formula f = {0};
-  if (DEBUG)
-    printf("Opening file %s\n", filename);
+  LOG_INFO("Opening file %s", filename);
 
   FILE *file = fopen(filename, "r");
   if (file == NULL) {
-    fprintf(stderr, "Error: failed to open file %s\n", filename);
+    LOG_ERROR("failed to open file %s", filename);
     return f;
   }
 
@@ -61,6 +73,8 @@ Formula parse_dimacs(const char *filename) {
   int header_parsed = 0;
 
   char line[256];
+  /* Read the file line-by-line. This is robust against comment lines and
+   * avoids picking tokens from later positions in the stream. */
   while (fgets(line, sizeof(line), file)) {
     char *p = line;
     while (*p == ' ' || *p == '\t')
@@ -75,13 +89,12 @@ Formula parse_dimacs(const char *filename) {
     if (!header_parsed) {
       if (*p == 'p') {
         if (sscanf(p, "p cnf %d %d", &num_vars, &num_clauses) != 2) {
-          fprintf(stderr, "Error: failed to read header line in %s\n", filename);
+          LOG_ERROR("failed to read header line in %s", filename);
           fclose(file);
           return f;
         }
         header_parsed = 1;
-        if (DEBUG)
-          printf("Header: %d variables, %d clauses\n", num_vars, num_clauses);
+        LOG_INFO("Header: %d variables, %d clauses", num_vars, num_clauses);
         continue;
       }
       continue;
@@ -95,6 +108,8 @@ Formula parse_dimacs(const char *filename) {
       break; // end of clauses
     }
 
+    /* Tokenize the clause line and collect up to ARITY literals. Literals
+     * beyond ARITY are ignored in this simple prototype. */
     Clause c = {0};
     int c_index = 0;
 
@@ -105,7 +120,7 @@ Formula parse_dimacs(const char *filename) {
         break;
 
       if (abs(l) > num_vars) {
-        fprintf(stderr, "Error: literal %d out of range in %s\n", l, filename);
+        LOG_ERROR("literal %d out of range in %s", l, filename);
         fclose(file);
         return f;
       }
@@ -119,7 +134,7 @@ Formula parse_dimacs(const char *filename) {
   }
 
   if (!header_parsed) {
-    fprintf(stderr, "Error: missing header line in %s\n", filename);
+    LOG_ERROR("missing header line in %s", filename);
   }
 
   fclose(file);

@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c11
-SRC = main.c parser.c
+CFLAGS = -Wall -Wextra -std=c11 -fopenmp
+SRC = main.c parser.c bruteforce.c dpll.c
 OBJ = $(SRC:.c=.o)
 TARGET = main
 

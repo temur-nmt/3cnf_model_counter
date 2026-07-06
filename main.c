@@ -1,5 +1,16 @@
-#include "header.h"
+/*
+ * main.c
+ *
+ * Simple driver for the model-counting prototype. Scans `INPUT_DIR` for
+ * DIMACS CNF files, parses them and runs both the sequential and parallel
+ * brute-force counters. Output is intentionally concise to make it easy to
+ * parse and compare timings.
+ */
 
+#include "header.h"
+#include <omp.h>
+
+/* Print a single clause in human-readable form. Used by debugging helpers. */
 void print_clause(Clause c) {
   printf("[");
   for (int i = 0; i < ARITY - 1; i++) {
@@ -9,86 +20,49 @@ void print_clause(Clause c) {
   printf("]\n");
 }
 
+/* Print the whole formula (each clause on a single line). */
 void print_formula(const Formula *f) {
   for (size_t i = 0; i < f->count; i++) {
     print_clause(f->clauses[i]);
   }
 }
 
-
+/* Entry point: enumerate files, parse, run counters and print results. */
 int main() {
   FileQueue q = list_dir(INPUT_DIR);
 
   for (size_t i = 0; i < q.count; i++) {
     Formula f = parse_dimacs(q.items[i]);
-    if (DEBUG) {
-      print_formula(&f);
-      printf("\n");
+    if (f.count == 0) {
+      LOG_ERROR("skipping file %s due to parse errors or empty formula", q.items[i]);
+      free_formula(&f);
+      continue;
     }
+
+    // Quick randomized satisfiability smoke-check (disabled by default).
+    int *assignment = malloc((formula_num_vars(&f) + 1) * sizeof(int));
+    if (assignment) {
+      for (size_t j = 0; j < (size_t)(formula_num_vars(&f) + 1); j++)
+        assignment[j] = rand() % 2;
+      int result = check_formula(&f, assignment);
+      (void)result; /* keep the call available for debugging */
+      free(assignment);
+    }
+
+    double t0 = omp_get_wtime();
+    unsigned long long seq_count = run_sequential_counting(&f);
+    double t1 = omp_get_wtime();
+    printf("%s: sequential count = %llu (time %0.6f s)\n", q.items[i], seq_count, t1 - t0);
+
+    int procs = omp_get_max_threads();
+    double tp0 = omp_get_wtime();
+    unsigned long long par_count = run_parallel_counting(&f, procs);
+    double tp1 = omp_get_wtime();
+    printf("%s: parallel count = %llu with %d threads (time %0.6f s)\n", q.items[i], par_count, procs, tp1 - tp0);
+
     free_formula(&f);
   }
 
   free(q.items);
   return 0;
 }
-
-/*
-if (TESTING) {
-    if (DEBUG)
-      printf("TESTING PARALLEL:\n");
-  } else {
-    if (DEBUG)
-      printf("TESTING SEQUENTIAL:\n");
-  }
-
-  // get input dir
-  struct dirent *de;
-  DIR *dr = opendir(INPUT_DIR);
-  if (!dr) {
-    fprintf(stderr, "Error: could not open input directory %s\n", INPUT_DIR);
-    return -1;
-  }
-  if (DEBUG)
-    printf("input directory: %s\n", INPUT_DIR);
-
-  // count all non-hidden files in input_dir
-  char path[256];
-  int found = 0;
-  while ((de = readdir(dr)) != NULL) {
-    if (de->d_name[0] == '.')
-      continue; // skip hidden files, . and ..
-    if (DEBUG)
-      printf("%s\n", de->d_name);
-    found++;
-  }
-  if (found == 0) {
-    fprintf(stderr, "Error: no files found in input directory\n");
-    closedir(dr);
-    return -1;
-  }
-  closedir(dr);
-
-  // parse file into Formula struct
-  FILE *fp = fopen(path, "r");
-  if (!fp) {
-    fprintf(stderr, "Error: could not open input file %s\n", path);
-    return -1;
-  }
-
-
-    Formula phi;
-    phi.num_vars = 0;
-    phi.num_clauses = 0;
-
-
-fclose(fp);
-
-// test print
-for (int i = 0; i < max_clauses; i++) {
-  printf("CLause %d: ", i);
-  for (int j = 0; j < ARITY) {
-    // print lits
-    printf("%d ", phi[i][j]);
-  }
-}
-*/

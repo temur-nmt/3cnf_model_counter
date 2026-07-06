@@ -48,7 +48,23 @@ Run the executable from the project root:
 ./main
 ```
 
-The program currently scans all non-hidden files in `test_instances/`, parses them, and prints parsed clauses when `DEBUG` is enabled.
+The program currently scans all non-hidden files in `test_instances/`, parses them, and prints concise results by default. Enable verbose parsing output by setting `DEBUG` in `header.h`.
+
+Console output
+---------------
+
+The driver prints concise, one-line-per-result summaries that are easy to parse
+or grep. Current format:
+
+- `<path>: sequential count = <N> (time <secs> s)`
+- `<path>: parallel count = <N> with <threads> threads (time <secs> s)`
+
+Example:
+
+```
+test_instances/uf20-019.cnf: sequential count = 2 (time 0.009448 s)
+test_instances/uf20-019.cnf: parallel count = 2 with 4 threads (time 0.008266 s)
+```
 
 ## Input format
 
@@ -88,6 +104,6 @@ Possible next steps:
 
 ## Notes
 
-- `DEBUG` is enabled by default in `header.h`; disable it for cleaner output.
+ - `DEBUG` is disabled by default in `header.h`; enable it for more verbose logging.
 - `INPUT_DIR` is currently fixed to `test_instances`; consider making it configurable.
 - The current parser is robust to leading comments and ignores `%` clauses termination.
