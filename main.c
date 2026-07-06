@@ -1,13 +1,5 @@
 #include "header.h"
 
-// void free_formula(Formula *phi);
-//
-// int run_parallel_counting(Formula *phi, int procs);
-//
-// int run_sequential_counting(Formula *phi);
-// int check_formula(Formula *phi, int *assignment);
-// int generate_assignments(Formula *phi, int *assignments, int current_var);
-//
 void print_clause(Clause c) {
   printf("[");
   for (int i = 0; i < ARITY - 1; i++) {
@@ -68,65 +60,18 @@ FileQueue list_dir(const char *path) {
   return q;
 }
 
-Formula parse_dimacs(char *filename) {
-  Formula f = {0};
-  if (DEBUG)
-    printf("Opening file %s\n", filename);
-  FILE *file = fopen(filename, "r");
-  if (file == NULL) {
-    fprintf(stderr, "Error: failed to open file %s\n", filename);
-    return f;
-  }
-
-  int num_vars, num_clauses;
-  fscanf(file, "p cnf %d %d", &num_vars, &num_clauses);
-  if (DEBUG)
-    printf("Header: p cnf %d %d\n", num_vars, num_clauses);
-
-  char line[256];
-  while (fgets(line, sizeof(line), file)) {
-    char *p = line;
-    while (*p == ' ' || *p == '\t')
-      p++; // skip whitespace
-    if (*p == '\n' || *p == '\r' || *p == '\0' || *p == 'c' || *p == 'p')
-      continue; // skip comments
-
-    Clause c = {0};
-    int c_index = 0;
-
-    char *token = strtok(p, " \t\r\n");
-    while (token) {
-      Lit l = atoi(token);
-      if (abs(l) > num_vars) {
-        fprintf(stderr, "Error: Literal %d bigger than expected\n", l);
-        fclose(file);
-        return f;
-      }
-      if (l == 0) {
-        break; // end of clause
-      } else {
-        c[c_index++] = l;
-      }
-      token = strtok(NULL, " \t\r\n");
-    }
-    append_clause(f, c);
-  }
-  fclose(file);
-  return f;
-}
-
 int main() {
   FileQueue q = list_dir(INPUT_DIR);
 
-  // loop over all non-hidden files in input_dir
   for (size_t i = 0; i < q.count; i++) {
     Formula f = parse_dimacs(q.items[i]);
     if (DEBUG) {
       print_formula(&f);
       printf("\n");
     }
-    // work here
+    free_formula(&f);
   }
+
   free(q.items);
   return 0;
 }
