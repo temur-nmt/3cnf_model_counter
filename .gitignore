@@ -1,0 +1,5 @@
+test_instances/
+A
+B
+.venv
+*.o

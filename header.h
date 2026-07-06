@@ -47,6 +47,7 @@ typedef struct {
 } FileQueue;
 
 // parser interface
+FileQueue list_dir(const char *path);
 Formula parse_dimacs(const char *filename);
 void free_formula(Formula *phi);
 

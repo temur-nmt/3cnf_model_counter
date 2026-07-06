@@ -15,50 +15,6 @@ void print_formula(const Formula *f) {
   }
 }
 
-FileQueue list_dir(const char *path) {
-  FileQueue q = {0};
-  DIR *dir = opendir(path);
-  if (!dir) {
-    fprintf(stderr, "failed to open directory %s\n", path);
-    return q;
-  }
-
-  struct dirent *ent;
-
-  while ((ent = readdir(dir)) != NULL) {
-    if (ent->d_name[0] == '.')
-      continue;
-
-    // grow if needed
-    if (q.count >= q.capacity) {
-      size_t new_cap = q.capacity ? q.capacity *= 2 : 16;
-
-      Filename *new_items = realloc(q.items, new_cap * sizeof(Filename));
-      if (!new_items) {
-        fprintf(stderr, "Error: Allocation of new items failed\n");
-        break;
-      }
-
-      q.items = new_items;
-      q.capacity = new_cap;
-    }
-
-    // build full path
-    char full[PATH_MAX_LEN];
-    snprintf(full, PATH_MAX_LEN, "%s/%s", path, ent->d_name);
-    full[PATH_MAX_LEN - 1] = '\0';
-    strncpy(q.items[q.count], full, PATH_MAX_LEN);
-    q.items[q.count][PATH_MAX_LEN - 1] = '\0';
-    if (DEBUG)
-      printf("%s/%s\n", path, ent->d_name);
-
-    q.count++;
-  }
-  if (DEBUG)
-    printf("listed files successfully.\n");
-  closedir(dir);
-  return q;
-}
 
 int main() {
   FileQueue q = list_dir(INPUT_DIR);
